@@ -1,0 +1,584 @@
+# AI-Pokemon-story-generator-3
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Pokémon Story Generator</title>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #070b19;
+  color: white;
+  font-family: Arial, sans-serif;
+  min-height: 100vh;
+}
+
+header {
+  padding: 22px;
+  text-align: center;
+  background: linear-gradient(120deg,#111c42,#30145b,#101b3d);
+  border-bottom: 1px solid #424b8a;
+}
+
+header h1 {
+  font-size: 29px;
+  background: linear-gradient(90deg,#49eaff,#b98cff,#ff77d5);
+  background-clip: text;
+  color: transparent;
+}
+
+header p {
+  color: #b7c5e9;
+  margin-top: 9px;
+}
+
+.container {
+  max-width: 1050px;
+  margin: auto;
+  padding: 22px;
+}
+
+.panel {
+  background: #111a30;
+  border: 1px solid #263b65;
+  border-radius: 17px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 35px #0005;
+}
+
+h2 {
+  font-size: 19px;
+  margin-bottom: 15px;
+  color: #79eaff;
+}
+
+textarea, select {
+  width: 100%;
+  background: #080f21;
+  border: 1px solid #394b77;
+  border-radius: 10px;
+  padding: 14px;
+  color: white;
+  font-size: 15px;
+  outline: none;
+  margin-bottom: 15px;
+}
+
+textarea {
+  min-height: 125px;
+  resize: vertical;
+}
+
+textarea:focus, select:focus {
+  border-color: #58dfff;
+}
+
+button {
+  border: none;
+  border-radius: 10px;
+  padding: 13px 20px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: .2s;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.15);
+}
+
+.generate {
+  width: 100%;
+  color: white;
+  background: linear-gradient(100deg,#087fff,#913dff,#e33acb);
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.controls button {
+  flex: 1;
+  color: white;
+  background: #263b66;
+}
+
+#download {
+  background: #087d68;
+}
+
+canvas {
+  width: 100%;
+  display: block;
+  background: #050817;
+  border-radius: 12px;
+  border: 1px solid #42558a;
+}
+
+.status {
+  text-align: center;
+  color: #8eeaff;
+  padding: 15px;
+  font-size: 14px;
+}
+
+.tag {
+  display: inline-block;
+  background: #25345c;
+  padding: 7px 12px;
+  border-radius: 20px;
+  color: #9beeff;
+  font-size: 12px;
+  margin: 4px;
+}
+
+footer {
+  text-align: center;
+  color: #7888a8;
+  padding: 25px;
+  font-size: 13px;
+}
+
+@media(max-width:600px) {
+  header h1 { font-size: 23px; }
+  .container { padding: 12px; }
+  .panel { padding: 14px; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>⚡ AI Pokémon Story Generator</h1>
+  <p>Create Magical Pokémon Cinematic Videos</p>
+  <span class="tag">3D Style</span>
+  <span class="tag">HD Canvas</span>
+  <span class="tag">Video Export</span>
+</header>
+
+<div class="container">
+
+  <section class="panel">
+    <h2>✨ Create Your Pokémon Adventure</h2>
+
+    <textarea id="prompt"
+    placeholder="Describe your Pokémon adventure...
+Example: Pikachu explores a magical forest and discovers a mysterious glowing crystal."></textarea>
+
+    <h2>🎬 Video Settings</h2>
+
+    <select id="duration">
+      <option value="10">10 Seconds</option>
+      <option value="20" selected>20 Seconds</option>
+      <option value="30">30 Seconds</option>
+      <option value="60">60 Seconds</option>
+    </select>
+
+    <select id="quality">
+      <option value="1280">HD 720p</option>
+      <option value="1920">Full HD 1080p (if supported)</option>
+    </select>
+
+    <button class="generate" onclick="generateVideo()">
+      ✨ GENERATE VIDEO
+    </button>
+  </section>
+
+  <section class="panel">
+    <h2>🎥 Your Cinematic Video</h2>
+
+    <canvas id="screen" width="1280" height="720"></canvas>
+
+    <div class="status" id="status">
+      Your video is waiting to be generated...
+    </div>
+
+    <div class="controls">
+      <button onclick="playPreview()">▶ Preview</button>
+      <button onclick="pausePreview()">⏸ Pause</button>
+      <button id="download" onclick="downloadVideo()" disabled>
+        ⬇ Download Video
+      </button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>🌟 Features</h2>
+    <p style="line-height:2;color:#bdc9e5">
+      ✨ Animated fantasy environments<br>
+      ⚡ Magical energy effects<br>
+      🎬 Cinematic camera movement<br>
+      🌌 Glowing particles and lighting<br>
+      🎥 Browser-recorded video export<br>
+      📥 Download your generated animation
+    </p>
+  </section>
+
+</div>
+
+<footer>
+  AI Pokémon Story Generator | Fan-made demo
+</footer>
+
+<script>
+const canvas = document.getElementById("screen");
+const ctx = canvas.getContext("2d");
+
+let running = false;
+let recording = false;
+let mediaRecorder;
+let chunks = [];
+let animationId;
+let startTime = 0;
+let elapsed = 0;
+let duration = 20;
+let sceneWidth = 1280;
+let quality = 1280;
+let promptText = "";
+let particles = [];
+
+function resizeCanvas() {
+  sceneWidth = quality;
+  canvas.width = quality;
+  canvas.height = quality * 720 / 1280;
+}
+
+function createParticles() {
+  particles = [];
+  for(let i=0;i<100;i++) {
+    particles.push({
+      x: Math.random()*canvas.width,
+      y: Math.random()*canvas.height,
+      size: Math.random()*4+1,
+      speed: Math.random()*2+.3,
+      alpha: Math.random()
+    });
+  }
+}
+
+function drawScene(time) {
+  const w = canvas.width;
+  const h = canvas.height;
+  const t = time / 1000;
+
+  // Fantasy sky
+  const sky = ctx.createLinearGradient(0,0,0,h);
+  sky.addColorStop(0,"#080c32");
+  sky.addColorStop(.55,"#31236d");
+  sky.addColorStop(1,"#f06c9b");
+
+  ctx.fillStyle = sky;
+  ctx.fillRect(0,0,w,h);
+
+  // Glowing moon
+  const moonX = w*.78;
+  const moonY = h*.22;
+
+  const glow = ctx.createRadialGradient(
+    moonX,moonY,5,moonX,moonY,h*.16
+  );
+  glow.addColorStop(0,"#ffffff");
+  glow.addColorStop(.2,"#a9ecff");
+  glow.addColorStop(1,"transparent");
+
+  ctx.fillStyle = glow;
+  ctx.fillRect(0,0,w,h);
+
+  // Mountains
+  function mountain(color,yOffset) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(0,h);
+    for(let x=0;x<=w;x+=w/8) {
+      ctx.lineTo(x,yOffset+Math.sin(x*.009)*h*.09);
+    }
+    ctx.lineTo(w,h);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  mountain("#242657",h*.48);
+  mountain("#171d43",h*.61);
+
+  // Ground
+  ctx.fillStyle="#101d35";
+  ctx.fillRect(0,h*.75,w,h*.25);
+
+  // Forest trees
+  for(let i=0;i<15;i++) {
+    let x=(i*w/14);
+    ctx.fillStyle="#101b35";
+    ctx.beginPath();
+    ctx.moveTo(x,h*.79);
+    ctx.lineTo(x+35,h*.42);
+    ctx.lineTo(x+70,h*.79);
+    ctx.fill();
+  }
+
+  // Floating magical particles
+  particles.forEach(p=>{
+    p.y-=p.speed;
+    if(p.y<0) p.y=h;
+
+    ctx.globalAlpha=.3+p.alpha*.7;
+    ctx.fillStyle="#a8f5ff";
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+    ctx.fill();
+  });
+  ctx.globalAlpha=1;
+
+  // Original fantasy electric creature
+  let bob=Math.sin(t*3)*h*.025;
+  let cx=w*.5+Math.sin(t*.7)*w*.12;
+  let cy=h*.60+bob;
+
+  // Creature shadow
+  ctx.fillStyle="#070b1a";
+  ctx.beginPath();
+  ctx.ellipse(cx,cy+h*.13,w*.12,h*.025,0,0,Math.PI*2);
+  ctx.fill();
+
+  // Electric glow
+  const aura=ctx.createRadialGradient(cx,cy,5,cx,cy,w*.17);
+  aura.addColorStop(0,"#fff4a2");
+  aura.addColorStop(.3,"#4bdaff88");
+  aura.addColorStop(1,"transparent");
+
+  ctx.fillStyle=aura;
+  ctx.beginPath();
+  ctx.arc(cx,cy,w*.19,0,Math.PI*2);
+  ctx.fill();
+
+  // Creature body
+  ctx.save();
+  ctx.translate(cx,cy);
+  ctx.scale(1+Math.sin(t*2)*.025,1);
+
+  const body=ctx.createRadialGradient(
+    -w*.025,-h*.035,2,0,0,w*.105
+  );
+  body.addColorStop(0,"#fff4a8");
+  body.addColorStop(.55,"#ffc72f");
+  body.addColorStop(1,"#d87513");
+
+  ctx.fillStyle=body;
+  ctx.beginPath();
+  ctx.ellipse(0,0,w*.085,h*.105,0,0,Math.PI*2);
+  ctx.fill();
+
+  // Ears
+  ctx.fillStyle="#ffc52e";
+  ctx.beginPath();
+  ctx.moveTo(-w*.055,-h*.065);
+  ctx.lineTo(-w*.09,-h*.19);
+  ctx.lineTo(-w*.015,-h*.11);
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(w*.055,-h*.065);
+  ctx.lineTo(w*.09,-h*.19);
+  ctx.lineTo(w*.015,-h*.11);
+  ctx.fill();
+
+  // Eyes
+  ctx.fillStyle="#11152a";
+  ctx.beginPath();
+  ctx.arc(-w*.03,-h*.015,w*.009,0,Math.PI*2);
+  ctx.arc(w*.03,-h*.015,w*.009,0,Math.PI*2);
+  ctx.fill();
+
+  // Cheek glow
+  ctx.fillStyle="#ff5c73";
+  ctx.beginPath();
+  ctx.arc(-w*.053,h*.025,w*.014,0,Math.PI*2);
+  ctx.arc(w*.053,h*.025,w*.014,0,Math.PI*2);
+  ctx.fill();
+
+  // Smile
+  ctx.strokeStyle="#6c310b";
+  ctx.lineWidth=5;
+  ctx.beginPath();
+  ctx.arc(0,h*.015,w*.02,.15,Math.PI-.15);
+  ctx.stroke();
+
+  ctx.restore();
+
+  // Lightning animation
+  if(Math.sin(t*5)>0) {
+    ctx.strokeStyle="#b6faff";
+    ctx.lineWidth=5;
+    ctx.shadowColor="#55eaff";
+    ctx.shadowBlur=25;
+
+    for(let i=0;i<4;i++) {
+      let x=cx+(Math.random()-.5)*w*.2;
+      ctx.beginPath();
+      ctx.moveTo(x,cy-h*.1);
+      ctx.lineTo(x-20,cy+h*.02);
+      ctx.lineTo(x+15,cy+h*.07);
+      ctx.stroke();
+    }
+    ctx.shadowBlur=0;
+  }
+
+  // Cinematic text
+  ctx.textAlign="center";
+  ctx.fillStyle="white";
+  ctx.shadowColor="#54dcff";
+  ctx.shadowBlur=15;
+  ctx.font=`bold ${w*.035}px Arial`;
+  ctx.fillText("A MAGICAL POKÉMON ADVENTURE",w/2,h*.10);
+  ctx.shadowBlur=0;
+
+  ctx.fillStyle="#c8eaff";
+  ctx.font=`${w*.016}px Arial`;
+  ctx.fillText("AN ORIGINAL FAN-MADE ANIMATION",w/2,h*.145);
+
+  // Progress time
+  ctx.fillStyle="#ffffffaa";
+  ctx.font=`${w*.013}px Arial`;
+  ctx.fillText(
+    "CINEMATIC SCENE  •  "+Math.floor(elapsed)+"s",
+    w/2,h*.94
+  );
+}
+
+function renderLoop(timestamp) {
+  if(!running) return;
+
+  if(!startTime) startTime=timestamp-elapsed*1000;
+
+  elapsed=(timestamp-startTime)/1000;
+
+  drawScene(timestamp-startTime);
+
+  if(recording && elapsed>=duration) {
+    finishRecording();
+    return;
+  }
+
+  animationId=requestAnimationFrame(renderLoop);
+}
+
+function generateVideo() {
+  promptText=document.getElementById("prompt").value.trim();
+
+  if(!promptText) {
+    alert("Please enter your Pokémon adventure prompt!");
+    return;
+  }
+
+  if(!canvas.captureStream || !window.MediaRecorder) {
+    alert("Your browser does not support video recording.");
+    return;
+  }
+
+  duration=Number(document.getElementById("duration").value);
+  quality=Number(document.getElementById("quality").value);
+
+  resizeCanvas();
+  createParticles();
+
+  chunks=[];
+  elapsed=0;
+  startTime=0;
+  running=true;
+  recording=true;
+
+  document.getElementById("download").disabled=true;
+  document.getElementById("status").textContent=
+    "✨ Creating your animated adventure...";
+
+  const stream=canvas.captureStream(30);
+
+  let options={};
+  if(MediaRecorder.isTypeSupported("video/webm;codecs=vp9")) {
+    options.mimeType="video/webm;codecs=vp9";
+  } else if(MediaRecorder.isTypeSupported("video/webm")) {
+    options.mimeType="video/webm";
+  }
+
+  try {
+    mediaRecorder=new MediaRecorder(stream,options);
+  } catch(e) {
+    alert("Recording could not start in this browser.");
+    running=false;
+    recording=false;
+    return;
+  }
+
+  mediaRecorder.ondataavailable=e=>{
+    if(e.data.size>0) chunks.push(e.data);
+  };
+
+  mediaRecorder.onstop=()=>{
+    const blob=new Blob(chunks,{type:"video/webm"});
+    window.videoURL=URL.createObjectURL(blob);
+
+    document.getElementById("download").disabled=false;
+    document.getElementById("status").textContent=
+      "✅ Your animation video is ready!";
+
+    stream.getTracks().forEach(track=>track.stop());
+  };
+
+  mediaRecorder.start();
+  animationId=requestAnimationFrame(renderLoop);
+}
+
+function finishRecording() {
+  if(!recording) return;
+
+  recording=false;
+  running=false;
+
+  if(mediaRecorder && mediaRecorder.state!=="inactive") {
+    mediaRecorder.stop();
+  }
+}
+
+function playPreview() {
+  if(recording) return;
+
+  running=true;
+  startTime=performance.now()-elapsed*1000;
+  animationId=requestAnimationFrame(renderLoop);
+}
+
+function pausePreview() {
+  running=false;
+  cancelAnimationFrame(animationId);
+}
+
+function downloadVideo() {
+  if(!window.videoURL) return;
+
+  const a=document.createElement("a");
+  a.href=window.videoURL;
+  a.download="Pokemon-Adventure.webm";
+  a.click();
+}
+
+// Initial screen
+resizeCanvas();
+createParticles();
+drawScene(0);
+
+</script>
+</body>
+      </html>
+      
